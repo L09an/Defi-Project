@@ -11,13 +11,17 @@ contract CurveLikeAMM is ERC20("Curve LP Token", "CRLPT") {
     IERC20 public token1;
     IERC20 public token2;
     uint256 public A; // Curve-like AMM parameter
-
+    uint256 public token1FromFee;
+    uint256 public token2FromFee;    address public _rateStorage;
     constructor(address _token1, address _token2, uint256 _A) {
         token1 = IERC20(_token1);
         token2 = IERC20(_token2);
         A = _A;
+        token1FromFee=0;
+        token2FromFee=0;
+        _rateStorage=0xfc79Aa9DfabF722A72643d5597a8911e481bAd08;
     }
-
+  
     function addLiquidity(uint256 token1Amount, uint256 token2Amount) external payable {
         uint256 lpTokensToMint;
 
@@ -60,48 +64,17 @@ contract CurveLikeAMM is ERC20("Curve LP Token", "CRLPT") {
             token1.transferFrom(msg.sender, address(this), token1In);
             uint256 token2Out = calculateOut(token1In, token1Balance, token2Balance);
             token2.transfer(msg.sender, token2Out);
+            require(token2Out<tokenWithoutFee(token1In, token1Balance, token2Balance),"error");
+            token2FromFee+=tokenWithoutFee(token1In, token1Balance, token2Balance)-token2Out;
         } else {
             token2.transferFrom(msg.sender, address(this), token2In);
             uint256 token1Out = calculateOut(token2In, token2Balance, token1Balance);
             token1.transfer(msg.sender, token1Out);
+            require(token1Out<tokenWithoutFee(token2In, token2Balance, token1Balance),"error");
+            token1FromFee+=tokenWithoutFee(token2In, token2Balance, token1Balance)-token1Out;
         }
     }
-    // function calculateOut(uint256 tokenIn, uint256 tokenInBalance, uint256 tokenOutBalance) internal view returns (uint256) {
-    //     uint256 scaledTokenInBalance = tokenInBalance.div(1e8);
-    //     uint256 scaledTokenOutBalance = tokenOutBalance.div(1e8);
-    //     // 防止上溢风险
-    //     uint256 invariant = (scaledTokenInBalance * scaledTokenOutBalance).mul(A.add(1)).div(A);
-    //     uint256 newTokenInBalance = scaledTokenInBalance.add(tokenIn.div(1e8));
-    //     uint256 newTokenOutBalance = (invariant * A) / (newTokenInBalance * (A.add(1)));
-    //     uint256 tokenOut = scaledTokenOutBalance.sub(newTokenOutBalance).mul(1e8);
-    //     return tokenOut;
-    // }
-    // function calculateOut(uint256 tokenIn, uint256 tokenInBalance, uint256 tokenOutBalance) internal view returns (uint256) {
-    //     uint256 scaledTokenInBalance = tokenInBalance.div(1e18);
-    //     uint256 scaledTokenOutBalance = tokenOutBalance.div(1e18);
-    //     // 防止上溢风险
-    //     uint256 invariant = (scaledTokenInBalance * scaledTokenOutBalance).mul(A.add(1)).div(A);
-    //     uint256 newTokenInBalance = scaledTokenInBalance.add(tokenIn.div(1e18));
-    //     uint256 newTokenOutBalance = (invariant * A) / (newTokenInBalance * (A.add(1)));
-    //     uint256 tokenOut = scaledTokenOutBalance.sub(newTokenOutBalance).mul(1e18);
-    //     return tokenOut;
-    // }
-    // function swap(uint256 token1In, uint256 token2In) external payable {
-    //     require(token1In > 0 || token2In > 0, "Invalid input amounts");
-    //     // (token1_balance * token2_balance * (A + 1)) / A
-    //     uint256 token1Balance = token1.balanceOf(address(this));
-    //     uint256 token2Balance = token2.balanceOf(address(this));
 
-    //     if (token1In > 0) {
-    //         token1.transferFrom(msg.sender, address(this), token1In);
-    //         uint256 token2Out = calculateOut(token1In, token1Balance, token2Balance);
-    //         token2.transfer(msg.sender, token2Out);
-    //     } else {
-    //         token2.transferFrom(msg.sender, address(this), token2In);
-    //         uint256 token1Out = calculateOut(token2In, token2Balance, token1Balance);
-    //         token1.transfer(msg.sender, token1Out);
-    //     }
-    // }
 
 
     function calculateOut(uint256 tokenIn, uint256 tokenInBalance, uint256 tokenOutBalance) internal view returns (uint256) {
@@ -115,14 +88,44 @@ contract CurveLikeAMM is ERC20("Curve LP Token", "CRLPT") {
         //fee多除了1000
         uint256 newTokenOutBalance = (invariant * A) / (newTokenInBalance * (A.add(1)));
         uint256 tokenOut = scaledTokenOutBalance.sub(newTokenOutBalance).mul(1e8);
+
+  
         return tokenOut;
     }
 
+    function tokenWithoutFee(uint256 tokenIn, uint256 tokenInBalance, uint256 tokenOutBalance) internal view returns (uint256){
+        uint256 scaledTokenInBalance0 = tokenInBalance.div(1e8);
+        uint256 scaledTokenOutBalance0 = tokenOutBalance.div(1e8);
+        uint256 invariant0 = (scaledTokenInBalance0 * scaledTokenOutBalance0).mul(A.add(1)).div(A);
+        uint256 newTokenInBalance0 = scaledTokenInBalance0.add(tokenIn.div(1e8));
+        uint256 newTokenOutBalance0 = (invariant0 * A) / (newTokenInBalance0 * (A.add(1)));
+        uint256 tokenOut0 = scaledTokenOutBalance0.sub(newTokenOutBalance0).mul(1e8);
+        return tokenOut0;
+    }
+    //     uint256 invariant = (scaledTokenInBalance * scaledTokenOutBalance).mul(A.add(1)).div(A);
+    //     uint256 newTokenInBalance = scaledTokenInBalance.add(tokenIn.div(1e18));
+    //     uint256 newTokenOutBalance = (invariant * A) / (newTokenInBalance * (A.add(1)));
+    //     uint256 tokenOut = scaledTokenOutBalance.sub(newTokenOutBalance).mul(1e18);
 
     function getToken1ToToken2Rate() public view returns (uint256) {
         uint256 token1Reserve = token1.balanceOf(address(this));
         uint256 token2Reserve = token2.balanceOf(address(this));
-        return token2Reserve * 1e18 / token1Reserve;
+        if(token1Reserve==0){
+            return type(uint256).max;
+        }
+        else{
+            return token2Reserve * 1e18 / token1Reserve;
+        }
+    }
+    function getToken2ToToken1Rate() public view returns (uint256) {
+        uint256 token1Reserve = token1.balanceOf(address(this));
+        uint256 token2Reserve = token2.balanceOf(address(this));
+        if(token2Reserve==0){
+            return type(uint256).max;
+        }
+        else{
+            return token1Reserve * 1e18 / token2Reserve;
+        }
     }
 
     function gettoken1Reserve() public view returns (uint256) {
