@@ -24,7 +24,8 @@
                 More
                 </a>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#">My Info</a></li>
+                    <MetaMask />
+                    <AlchemyPanel />
                     <li><a class="dropdown-item" href="#">log out</a></li>
                 </ul>
             </li>
@@ -38,7 +39,13 @@
 
 import { useRoute } from 'vue-router'
 import { computed } from 'vue'
+import MetaMask from "./MetaMask.vue";
+import AlchemyPanel from './AlchemyPanel.vue';
 export default {
+    components: {
+    MetaMask,
+    AlchemyPanel,
+  },
     setup() {
         const route = useRoute();
         let route_name = computed(() => route.name)
