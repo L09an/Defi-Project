@@ -52,7 +52,7 @@ contract RateStorage {
             if (rateInfo.token1 == token1Address && rateInfo.token2 == token2Address) {
                 hasMatchingAddress = true;
                 fetchAndStoreRate(ammAddresses[i]);
-                // rateInfo = rateInfos[ammAddresses[i]]; // Refresh rateInfo after fetchAndStoreRate
+                rateInfo = rateInfos[ammAddresses[i]]; // Refresh rateInfo after fetchAndStoreRate
                 if (rateInfo.rate12 < lowestRate) {
                     lowestRate = rateInfo.rate12;
                     lowestRateAMM = ammAddresses[i];
@@ -61,7 +61,7 @@ contract RateStorage {
             else if (rateInfo.token1 == token2Address && rateInfo.token2 == token1Address) {
                 hasMatchingAddress = true;
                 fetchAndStoreRate(ammAddresses[i]);
-                // rateInfo = rateInfos[ammAddresses[i]]; // Refresh rateInfo after fetchAndStoreRate
+                rateInfo = rateInfos[ammAddresses[i]]; // Refresh rateInfo after fetchAndStoreRate
                 if (rateInfo.rate21 < lowestRate) {
                     lowestRate = rateInfo.rate21;
                     lowestRateAMM = ammAddresses[i];
