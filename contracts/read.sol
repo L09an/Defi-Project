@@ -15,11 +15,18 @@ contract RateStorage {
         address token1;
         address token2;
     }
-
+    address public owner;
     mapping(address => RateInfo) public rateInfos;
     address[] public ammAddresses;
-
-    function fetchAndStoreRate(address curveLikeAMMAddress) public {
+    event searchrate(address indexed caller,address token1Address, address token2Address);
+    constructor(){
+        owner=msg.sender;
+    }
+    modifier onlyOwner(){
+        require(msg.sender==owner||msg.sender==address(this),"only owner can call this function");
+        _;
+    }
+    function fetchAndStoreRate(address curveLikeAMMAddress) public onlyOwner{
         ICurveLikeAMM curveLikeAMM = ICurveLikeAMM(curveLikeAMMAddress);
         uint256 rate12 = curveLikeAMM.getToken1ToToken2Rate();
         uint256 rate21 = curveLikeAMM.getToken2ToToken1Rate();
@@ -68,8 +75,9 @@ contract RateStorage {
                 }
             }
         }
-
+        
         require(hasMatchingAddress, "No matching AMM found");
+        emit searchrate(msg.sender,token1Address,token2Address);
         return lowestRateAMM;
     }
 
