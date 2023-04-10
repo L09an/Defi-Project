@@ -20,16 +20,22 @@ contract CurveLikeAMM is ERC20("Curve LP Token", "CRLPT") {
     event Swap(address indexed user, uint256 token1In, uint256 token2In, uint256 token1Out, uint256 token2Out);
     event DistributeFee1(address indexed holder, uint256 token1Amount);
     event DistributeFee2(address indexed holder, uint256 token2Amount);
-
-    constructor(address _token1, address _token2, uint256 _A) {
+    address owner;
+    constructor(address _token1, address _token2) {
         token1 = IERC20(_token1);
         token2 = IERC20(_token2);
-        A = _A;
+        A = 100;
         token1FromFee=0;
         token2FromFee=0;
-
+        owner=msg.sender;
     }
-  
+    modifier onlyOwner(){
+        require(msg.sender==owner,"only owner can call this function");
+        _;
+    }
+    function modifyA(uint256 newA) external onlyOwner{
+        A=newA;
+    }
     function addLiquidity(uint256 token1Amount, uint256 token2Amount) external payable {
         uint256 lpTokensToMint;
 
