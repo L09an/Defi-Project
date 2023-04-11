@@ -16,8 +16,8 @@ export default function TokenBalancesDisplay( {address, connector} ) {
                 </h1>
             </header>
             <div className={styles.buttons_container}>
-                <SwapBox address={address}></SwapBox>
-                <Chart></Chart>
+                <SwapBox address={address} connector={connector}></SwapBox>
+                <div></div>
             </div>
         </div>
     )

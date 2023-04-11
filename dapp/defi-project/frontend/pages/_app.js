@@ -45,12 +45,10 @@ function MyApp({ Component, pageProps }) {
     onConnect({ address, connector, isReconnected }) {
       setWallet(connector);
       setAdresss(address);
-      console.log("Connected to", address, "with", connector);
+      // console.log("Connected to", address, "with", connector);
       if (!isReconnected) router.reload();
     },
   });
-
-
   return (
     <WagmiConfig client={wagmiClient}>
       <RainbowKitProvider
@@ -59,7 +57,7 @@ function MyApp({ Component, pageProps }) {
         chains={chains}
       >
         <MainLayout address={address} connector={wallet}>
-          <Component {...pageProps}  />
+          <Component {...pageProps} />
         </MainLayout>
       </RainbowKitProvider>
     </WagmiConfig>
