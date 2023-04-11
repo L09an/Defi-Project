@@ -6,9 +6,8 @@ import { Network, Alchemy } from 'alchemy-sdk';
 import Chart from "./Chart";
 import SwapBox from "./swapbox/SwapBox";
 
-export default function TokenBalancesDisplay() {
+export default function TokenBalancesDisplay( {address, connector} ) {
     const router = useRouter();
-
     return (
         <div className={styles.container}>
             <header className={styles.header_container}>
@@ -17,7 +16,7 @@ export default function TokenBalancesDisplay() {
                 </h1>
             </header>
             <div className={styles.buttons_container}>
-                <SwapBox></SwapBox>
+                <SwapBox address={address}></SwapBox>
                 <Chart></Chart>
             </div>
         </div>

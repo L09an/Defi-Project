@@ -1,8 +1,43 @@
 // SwapBox.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from '../../styles/SwapBox.module.css';
+import { Network, Alchemy } from 'alchemy-sdk';
+//import the contract ABI
+import contract from '../../contracts/ERC20.json';
 
-export default function SwapBox () {
+const initalBalance = [{
+  address: '',
+  tokenBalances: '',
+}]
+export default function SwapBox({  address }) {
+
+  const [balance, setbalance] = React.useState(initalBalance);
+
+  const settings = {
+    apiKey: "6EDoKYlQPVkeYGzQh79M4SUGnV2T3Hre",
+    network: Network.ETH_SEPOLIA,
+  };
+
+  const alchemy = new Alchemy(settings);
+
+  async function fetechBalance() {
+    alchemy.core.getTokenBalances(address).then((result) => {
+      setbalance(result.tokenBalances);
+      console.log(result)
+    });
+  }
+
+  const hexToDecimal = hex => {
+    const dec = parseInt(hex, 16);
+    const reduceDec = dec / 1e18;
+    return reduceDec;
+  };
+
+  const handleFetech = () => {
+    fetechBalance()
+  }
+
+
   return (
     <div className={styles.swapbox}>
       <h2>Swap</h2>
@@ -20,6 +55,16 @@ export default function SwapBox () {
         <span className={styles.tokensymbol}>DAI</span>
       </div>
       <button className={styles.swapbutton}>Swap</button>
+      <label htmlFor="swapfee">Swap Fee</label>
+      <button className={styles.swapfee} onClick={handleFetech}>select</button>
+      <ul>
+      {balance.map(token => (
+        <li key={token.contractAddress}>
+          <p>{token.contractAddress}</p>
+          <p>{hexToDecimal(token.tokenBalance)}</p>
+        </li>
+      ))}
+    </ul>
     </div>
   );
 };
