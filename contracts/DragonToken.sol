@@ -32,7 +32,7 @@ contract ERC20 is IERC20 {
     uint8 public decimals = 18;
 
     constructor() {
-        totalSupply = 10000 * 10**18;
+        totalSupply = 50000 * 10**18;
         balanceOf[msg.sender] = totalSupply;
     }
 
