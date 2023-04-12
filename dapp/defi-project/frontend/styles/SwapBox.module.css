@@ -1,6 +1,7 @@
 /* SwapBox.css */
 .swapbox {
     background-color: #f9fafb;
+    color: #0d0d0d;
     border: 1px solid #d8d9db;
     border-radius: 16px;
     padding: 16px;
@@ -53,4 +54,45 @@
   .swapbutton:hover {
     background-color: #2c387e;
   }
+  .swapfee {
+    background-color: #50656d;
+    color: #fff;
+    border-radius: 8px;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+
+  .tokenDropdown {
+    position: relative;
+    display: inline-block;
+    width: 200px;
+    margin-left: 10px;
+  }
   
+  .tokenSelect {
+    appearance: none;
+    background-color: #ffffff;
+    border: 1px solid #dae1e9;
+    border-radius: 8px;
+    color: #0d0d0d;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 8px 40px 8px 12px;
+    width: 100%;
+    outline: none;
+  }
+  
+  .tokenDropdown::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    width: 0;
+    height: 0;
+    margin-top: -2px;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #0d0d0d;
+    pointer-events: none;
+  }

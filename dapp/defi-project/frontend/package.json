@@ -12,9 +12,11 @@
 	"dependencies": {
 		"@rainbow-me/rainbowkit": "^0.12.4",
 		"alchemy-sdk": "^2.6.2",
+		"ethers": "^5.7.2",
 		"next": "13.1.2",
 		"react": "18.2.0",
 		"react-dom": "18.2.0",
+		"react-icons": "^4.8.0",
 		"recharts": "^2.5.0",
 		"wagmi": "^0.12.6"
 	},
