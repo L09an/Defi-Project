@@ -21,6 +21,19 @@
   .swapinput label {
     margin-right: 8px;
   }
+
+  .poolSelect{
+    appearance: none;
+    background-color: #ffffff;
+    border: 1px solid #dae1e9;
+    border-radius: 8px;
+    color: #0d0d0d;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 8px 40px 8px 12px;
+    width: 60%;
+    outline: none;
+  }
   
   .swapinput input {
     border: 1px solid #d8d9db;
