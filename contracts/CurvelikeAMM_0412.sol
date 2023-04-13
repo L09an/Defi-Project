@@ -74,7 +74,7 @@ contract CurveLikeAMM is ERC20("Curve LP Token", "CRLPT") {
     function removeLiquidity(uint256 lpTokens) external {
         uint256 token1Reserve = token1.balanceOf(address(this));
         uint256 token2Reserve = token2.balanceOf(address(this));
-        require(balanceOf(msg.sender)>lpTokens,"not enough lp tokens");
+        require(balanceOf(msg.sender)>=lpTokens,"not enough lp tokens");
         uint256 token1Amount = (lpTokens * token1Reserve) / totalSupply();
         uint256 token2Amount = (lpTokens * token2Reserve) / totalSupply();
 
