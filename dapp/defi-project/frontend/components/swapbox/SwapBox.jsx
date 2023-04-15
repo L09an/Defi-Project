@@ -33,11 +33,11 @@ export default function SwapBox({ address, connector }) {
   const [tokens, setTokens] = React.useState(initalBalance);
   const [fromTokenAmount, setFromTokenAmount] = useState('');
   const [toTokenAmount, setToTokenAmount] = useState('');
-  const [fromToken, setFromToken] = useState('0x0775b028ad0807cba7f9e4c92f61d9704c486372');
-  const [toToken, setToToken] = useState('0x6653b22a79c775f80c6dabb7fb8e049249c441f1');
+  const [fromToken, setFromToken] = useState(initalBalance[0].contractAddress);
+  const [toToken, setToToken] = useState(initalBalance[1].contractAddress);
   const [rate, setRate] = useState(0);
   const [LPpools, setLPpools] = useState(initalLPpools);
-  const [selectedPool, setSelectedPool] = useState('0x3bd7a249744b6e8f651cad19a51a4b079331b17b');
+  const [selectedPool, setSelectedPool] = useState(initalLPpools[0].contractAddress);
   const [swapOutcome, setSwapOutcome] = useState(0);
   const [estimateInput, setEstimateInput] = useState(0);
 
