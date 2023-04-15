@@ -1,12 +1,13 @@
-// SwapBox.jsx
+// Import the React and useState hooks, alchemy-sdk, ethers, and the swapbox styles
 import React, { useState, useEffect } from 'react';
 import styles from '../../styles/SwapBox.module.css';
 import { Network, Alchemy, Utils } from 'alchemy-sdk';
-import SwapContractABI from './SwapcontractABI.json';
+import { ethers } from 'ethers';
 import { IoIosArrowDown, IoIosRefresh, } from 'react-icons/io';
+
 //import the contract ABI
 import ERC20 from './ERC20.json';
-import { ethers } from 'ethers';
+import SwapContractABI from './SwapcontractABI.json';
 
 const initalBalance = [
   { symbol: 'DGT', name: 'Dragon Token', balance: 0, contractAddress: "0x0775b028ad0807cba7f9e4c92f61d9704c486372" }, 
@@ -18,7 +19,16 @@ const initalLPpools = [
   { symbol: 'Pool 2', contractAddress: "0x2cc8ae87202ca9d6632f8c2e038796bee4f7cc10" },
 ]
 
+/**
 
+SwapBox functional component for handling token swapping.
+This component maintains the state for tokens, token amounts, selected tokens,
+rates, liquidity pools, selected pool, modal visibility, and estimated inputs and outcomes.
+It also initializes the Alchemy API client and sets up necessary contract interfaces.
+@param {Object} props - The properties passed down from the parent component.
+@param {string} props.address - The Ethereum address of the user.
+@param {Object} props.connector - The web3-react connector instance.
+*/
 export default function SwapBox({ address, connector }) {
   const [tokens, setTokens] = React.useState(initalBalance);
   const [fromTokenAmount, setFromTokenAmount] = useState('');
@@ -32,7 +42,6 @@ export default function SwapBox({ address, connector }) {
   const [swapOutcome, setSwapOutcome] = useState(0);
   const [estimateInput, setEstimateInput] = useState(0);
 
-  // const swapContractAddress = '0xF54D0c7d6845221763CeFd21Fc6aeDF99B0EFac0';
   const settings = {
     apiKey: "6EDoKYlQPVkeYGzQh79M4SUGnV2T3Hre",
     network: Network.ETH_SEPOLIA,
@@ -48,15 +57,22 @@ export default function SwapBox({ address, connector }) {
   const token1ToToken2Rate = iface.encodeFunctionData("getToken1ToToken2Rate");
   const token2ToToken1Rate = iface.encodeFunctionData("getToken2ToToken1Rate");
 
-
-  // const balanceData = iface.encodeFunctionData("balanceOf", address);
-
+  /**
+  Asynchronous function to fetch the user's token balances and update the swap rate.
+  This function performs the following tasks:
+  Resets the swap outcome and estimated input values.
+  Fetches the user's token balances using the Alchemy API and updates the token balance information.
+  If the user's selected fromToken matches the initial balance's contract address, fetches the
+  token2-to-token1 swap rate from the selected pool.
+  If the user's selected fromToken matches the second initial balance's contract address, fetches the
+  token1-to-token2 swap rate from the selected pool.
+  */
   async function fetechBalance() {
+    // Reset swap outcome and estimated input values
     setSwapOutcome(0)
     setEstimateInput(0)
+    // Fetch token balances and update balance information
     alchemy.core.getTokenBalances(address).then((result) => {
-      console.log('result:', result)
-      const t = [...tokens];
       result.tokenBalances.forEach(token => {
         t.forEach((item, index) => {
           if (item.contractAddress === token.contractAddress) {
@@ -66,12 +82,14 @@ export default function SwapBox({ address, connector }) {
       })
       setTokens(t)
     });
+    // Fetch token2-to-token1 swap rate if fromToken matches the initial balance's contract 
     if (fromToken === initalBalance[0].contractAddress) {
       alchemy.core.call({ to: selectedPool, data: token2ToToken1Rate }).then((result) => {
         const r = hexToDecimal(result);
         setRate(r)
       });
     }
+    // Fetch token1-to-token2 swap rate if fromToken matches the second initial balance's 
     if (fromToken === initalBalance[1].contractAddress) {
       alchemy.core.call({ to: selectedPool, data: token1ToToken2Rate }).then((result) => {
         const r = hexToDecimal(result);
@@ -81,6 +99,11 @@ export default function SwapBox({ address, connector }) {
 
   }
 
+  /**
+  Converts a hexadecimal number to a decimal number with a fixed precision of 5 decimal places.
+  @param {string} hex - The hexadecimal number to be converted.
+  @returns {string} The converted decimal number as a string with a fixed precision of 5 decimal places.
+  */
   const hexToDecimal = hex => {
     const dec = parseInt(hex, 16);
     const reduceDec = dec / 1e18;
@@ -91,25 +114,32 @@ export default function SwapBox({ address, connector }) {
     fetechBalance()
   }
 
+  /**
+  Asynchronous function to handle a token swap.
+  This function performs the following tasks:
+  Fetches the token symbol from the selected pool using the Alchemy API.
+  Sets up the necessary parameters for the swap transaction using the ethers.js library.
+  Sends the swap transaction using the Web3Provider.
+  Note: Any errors encountered during the process are logged to the console.
+  */
   async function handleSwap() {
-    console.log('toTokenAmount:', toTokenAmount, 'fromTokenAmount:', fromTokenAmount, 'fromToken:', fromToken, 'toToken:', toToken)
     try {
+      // Fetch token symbol from the selected pool
       alchemy.core.call({
         to: selectedPool,
         data: symbolData,
       }).then((result) => {
         const symbol = ethers.utils.toUtf8String(result);
-        console.log('result:', symbol)
       });
     } catch (e) {
       console.log(e)
     }
-
+      
     try {
+      // Set up transaction parameters for the swap transaction
       const ethereum = window.ethereum;
       const provider = new ethers.providers.Web3Provider(ethereum);
       const swapdata = Abicoder.encodeFunctionData("swap", [(Number(fromTokenAmount) * 1e18).toString(), (Number(0) * 1e18).toString()]);
-      console.log('swapdata:', swapdata)
       const params = [{
         from: address,
         to: selectedPool,
@@ -127,12 +157,21 @@ export default function SwapBox({ address, connector }) {
     }
   }
 
+  /**
+  Asynchronous function to handle token approval for a swap transaction.
+
+  This function performs the following tasks:
+
+  Sets up the necessary parameters for the token approval transaction using the ethers.js library.
+  Sends the token approval transaction using the Web3Provider.
+  Note: Any errors encountered during the process are logged to the console.
+  */
   async function handleApprove() {
     try {
+      // Set up transaction parameters for token approval
       const ethereum = window.ethereum;
       const provider = new ethers.providers.Web3Provider(ethereum);
       const approveData = erc20Abi.encodeFunctionData("approve", [selectedPool, (Number(fromTokenAmount) * 1e18).toString()]);
-      console.log('approveData:', approveData)
       const params = [{
         from: address,
         to: fromToken,
@@ -141,7 +180,7 @@ export default function SwapBox({ address, connector }) {
         gasLimit: ethers.utils.hexlify(10000),
         gasPrice: ethers.utils.hexlify(parseInt(await provider.getGasPrice())),
       }];
-
+      // Send the token approval transaction
       provider.send('eth_sendTransaction', params).then((result) => {
         console.log('result:', result)
       });
@@ -150,7 +189,19 @@ export default function SwapBox({ address, connector }) {
     }
   }
 
-
+  /**
+  Swap box component for token swapping.
+  The component includes the following elements:
+  Swap box header with a refresh button to fetch updated swap data.
+  A drop-down menu for selecting a liquidity pool (LP) pool.
+  Input fields for selecting the 'from' token and specifying the token amount,
+  an 'Approve' button for token approval, and a label to display the estimated input.
+  Swap rate and direction arrow.
+  A label to display the estimated outcome of the swap.
+  Input fields for selecting the 'to' token and specifying the token amount,
+  and a label to display the estimated input.
+  A 'Swap' button to initiate the token swap.
+  */
   return (
     <div className={styles.swapbox}>
       <div className={styles.swapboxheader}>
@@ -191,7 +242,6 @@ export default function SwapBox({ address, connector }) {
             </option>
           ))}
         </select>
-        {/* <IoIosAdd className="add-icon" onClick={() => setShowModal(true)} /> */}
         <button className={styles.swapbutton} onClick={handleApprove}>Approve</button>
       </div>
       <label htmlFor="swapfee">Estimated input:{estimateInput}</label>
@@ -228,28 +278,6 @@ export default function SwapBox({ address, connector }) {
         </select>
       </div>
       <button className={styles.swapbutton} onClick={handleSwap}>Swap</button>
-
-      {showModal && (
-        <div className="modal">
-          <div className="modal-content">
-            <h3>Add a new token</h3>
-            <label>Symbol:</label>
-            <input
-              type="text"
-              value={newTokenSymbol}
-              onChange={(e) => setNewTokenSymbol(e.target.value)}
-            />
-            <label>Name:</label>
-            <input
-              type="text"
-              value={newTokenName}
-              onChange={(e) => setNewTokenName(e.target.value)}
-            />
-            <button onClick={handleAddToken}>Add token</button>
-            <button onClick={() => setShowModal(false)}>Cancel</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
