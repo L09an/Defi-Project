@@ -38,7 +38,6 @@ export default function SwapBox({ address, connector }) {
   const [rate, setRate] = useState(0);
   const [LPpools, setLPpools] = useState(initalLPpools);
   const [selectedPool, setSelectedPool] = useState('0x3bd7a249744b6e8f651cad19a51a4b079331b17b');
-  const [showModal, setShowModal] = useState(false);
   const [swapOutcome, setSwapOutcome] = useState(0);
   const [estimateInput, setEstimateInput] = useState(0);
 
@@ -224,10 +223,7 @@ export default function SwapBox({ address, connector }) {
             if (e.target.value > 0) {
               const predictOut = iface.encodeFunctionData("predictOut", [(Number(e.target.value) * 1e18).toString(), (Number(0) * 1e18).toString()]);
               try {
-                alchemy.core.call({
-                  to: selectedPool,
-                  data: predictOut,
-                }).then((result) => {
+                alchemy.core.call({to: selectedPool,data: predictOut,}).then((result) => {
                   setSwapOutcome(hexToDecimal(result))
                 });
               } catch (e) {
@@ -257,10 +253,7 @@ export default function SwapBox({ address, connector }) {
             if (e.target.value > 0) {
               const predictIn = iface.encodeFunctionData("predictIn", [(Number(0) * 1e18).toString(), (Number(e.target.value) * 1e18).toString()]);
               try {
-                alchemy.core.call({
-                  to: selectedPool,
-                  data: predictIn,
-                }).then((result) => {
+                alchemy.core.call({to: selectedPool,data: predictIn,}).then((result) => {
                   setEstimateInput(hexToDecimal(result))
                 });
               } catch (e) {
