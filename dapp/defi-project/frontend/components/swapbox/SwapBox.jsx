@@ -9,8 +9,8 @@ import ERC20 from './ERC20.json';
 import { ethers } from 'ethers';
 
 const initalBalance = [
-  { symbol: 'PXT', name: 'Phenix Token', balance: 0, contractAddress: "0x6653b22a79c775f80c6dabb7fb8e049249c441f1" },
-  { symbol: 'DGT', name: 'Dragon Token', balance: 0, contractAddress: "0x0775b028ad0807cba7f9e4c92f61d9704c486372" }
+  { symbol: 'DGT', name: 'Dragon Token', balance: 0, contractAddress: "0x0775b028ad0807cba7f9e4c92f61d9704c486372" }, 
+  { symbol: 'PXT', name: 'Phenix Token', balance: 0, contractAddress: "0x6653b22a79c775f80c6dabb7fb8e049249c441f1" }
 ];
 
 const initalLPpools = [
@@ -23,8 +23,8 @@ export default function SwapBox({ address, connector }) {
   const [tokens, setTokens] = React.useState(initalBalance);
   const [fromTokenAmount, setFromTokenAmount] = useState('');
   const [toTokenAmount, setToTokenAmount] = useState('');
-  const [fromToken, setFromToken] = useState('DGT');
-  const [toToken, setToToken] = useState('PXT');
+  const [fromToken, setFromToken] = useState('0x0775b028ad0807cba7f9e4c92f61d9704c486372');
+  const [toToken, setToToken] = useState('0x6653b22a79c775f80c6dabb7fb8e049249c441f1');
   const [rate, setRate] = useState(0);
   const [LPpools, setLPpools] = useState(initalLPpools);
   const [selectedPool, setSelectedPool] = useState('0x3bd7a249744b6e8f651cad19a51a4b079331b17b');
@@ -42,7 +42,7 @@ export default function SwapBox({ address, connector }) {
 
   const iface = new Utils.Interface(SwapContractABI);
   const Abicoder = new ethers.utils.Interface(SwapContractABI)
-  const erc20Abi = new ethers.utils.Interface(ERC20.output.abi)
+  const erc20Abi = new ethers.utils.Interface(ERC20)
   const symbolData = erc20Abi.encodeFunctionData("symbol");
   const nameData = erc20Abi.encodeFunctionData("name");
   const token1ToToken2Rate = iface.encodeFunctionData("getToken1ToToken2Rate");
@@ -66,13 +66,13 @@ export default function SwapBox({ address, connector }) {
       })
       setTokens(t)
     });
-    if (fromToken === 'DGT') {
-      alchemy.core.call({ to: selectedPool, data: token2ToToken1Rate}).then((result) => {
+    if (fromToken === initalBalance[0].contractAddress) {
+      alchemy.core.call({ to: selectedPool, data: token2ToToken1Rate }).then((result) => {
         const r = hexToDecimal(result);
         setRate(r)
       });
     }
-    if (fromToken === 'PXT') {
+    if (fromToken === initalBalance[1].contractAddress) {
       alchemy.core.call({ to: selectedPool, data: token1ToToken2Rate }).then((result) => {
         const r = hexToDecimal(result);
         setRate(r)
@@ -108,12 +108,35 @@ export default function SwapBox({ address, connector }) {
     try {
       const ethereum = window.ethereum;
       const provider = new ethers.providers.Web3Provider(ethereum);
-      const swapdata = Abicoder.encodeFunctionData("swap", [(Number(fromTokenAmount) * 1e18).toString(), (Number(toTokenAmount) * 1e18).toString()]);
+      const swapdata = Abicoder.encodeFunctionData("swap", [(Number(fromTokenAmount) * 1e18).toString(), (Number(0) * 1e18).toString()]);
       console.log('swapdata:', swapdata)
       const params = [{
         from: address,
         to: selectedPool,
         data: swapdata,
+        nonce: await provider.getTransactionCount(address, "latest").then((result) => { console.log(typeof (result)); return result.toString() }),
+        gasLimit: ethers.utils.hexlify(10000),
+        gasPrice: ethers.utils.hexlify(parseInt(await provider.getGasPrice())),
+      }];
+
+      provider.send('eth_sendTransaction', params).then((result) => {
+        console.log('result:', result)
+      });
+    } catch (e) {
+      console.log(e)
+    }
+  }
+
+  async function handleApprove() {
+    try {
+      const ethereum = window.ethereum;
+      const provider = new ethers.providers.Web3Provider(ethereum);
+      const approveData = erc20Abi.encodeFunctionData("approve", [selectedPool, (Number(fromTokenAmount) * 1e18).toString()]);
+      console.log('approveData:', approveData)
+      const params = [{
+        from: address,
+        to: fromToken,
+        data: approveData,
         nonce: await provider.getTransactionCount(address, "latest").then((result) => { console.log(typeof (result)); return result.toString() }),
         gasLimit: ethers.utils.hexlify(10000),
         gasPrice: ethers.utils.hexlify(parseInt(await provider.getGasPrice())),
@@ -161,15 +184,15 @@ export default function SwapBox({ address, connector }) {
               }
             }
           }} />
-        <select className={styles.tokenSelect} value={fromToken} onChange={(e) => setFromToken(e.target.value)}>
+        <select className={styles.tokenSelect} value={fromToken} onChange={(e) => { setFromToken(e.target.value); }}>
           {tokens.map((token) => (
-            <option key={token.symbol} value={token.symbol}>
+            <option key={token.symbol} value={token.contractAddress}>
               {token.symbol} - {token.name} - balance: {token.balance}
             </option>
           ))}
         </select>
         {/* <IoIosAdd className="add-icon" onClick={() => setShowModal(true)} /> */}
-
+        <button className={styles.swapbutton} onClick={handleApprove}>Approve</button>
       </div>
       <label htmlFor="swapfee">Estimated input:{estimateInput}</label>
       <div className={styles.swaparrow}>&#8595;
@@ -198,7 +221,7 @@ export default function SwapBox({ address, connector }) {
           }} />
         <select className={styles.tokenSelect} value={toToken} onChange={(e) => setToToken(e.target.value)}>
           {tokens.map((token) => (
-            <option key={token.symbol} value={token.symbol}>
+            <option key={token.symbol} value={token.contractAddress}>
               {token.symbol} - {token.name} - balance: {token.balance}
             </option>
           ))}

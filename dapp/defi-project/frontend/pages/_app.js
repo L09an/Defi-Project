@@ -42,10 +42,7 @@ function MyApp({ Component, pageProps }) {
   const [wallet, setWallet] = React.useState(null);
   const router = useRouter()
   const account = useAccount({
-    onConnect({ address, connector, isReconnected }) {
-      setWallet(connector);
-      setAdresss(address);
-      // console.log("Connected to", address, "with", connector);
+    onConnect({ address, connector, isReconnected }) {setWallet(connector); setAdresss(address);
       if (!isReconnected) router.reload();
     },
   });
